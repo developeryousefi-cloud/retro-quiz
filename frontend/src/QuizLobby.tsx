@@ -73,7 +73,11 @@ const QuizLobby: React.FC = () => {
       const currentUser = participants.find(p => p.id === socketRef.current?.id);
       if (currentUser) {
         setIsFacilitator(currentUser.isFacilitator);
+        console.log(`User ${currentUser.name} - isFacilitator: ${currentUser.isFacilitator}`);
       }
+      // Debug: Log all facilitators
+      const facilitators = participants.filter(p => p.isFacilitator);
+      console.log(`Total facilitators: ${facilitators.length}`, facilitators.map(f => f.name));
     });
     return () => {
       socketRef.current?.off('participantJoined');
@@ -182,15 +186,20 @@ const QuizLobby: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    {isFacilitator && !quizStarted && (
-                      <Button variant="primary" onClick={handleStartQuiz} className="w-100 mb-3">
-                        ⭐ Start Quiz (Facilitator Only)
-                      </Button>
-                    )}
-                    {!isFacilitator && !quizStarted && participants.length > 0 && (
-                      <Alert variant="info" className="text-center">
-                        Waiting for facilitator to start the quiz...
-                      </Alert>
+                    {!quizStarted && (
+                      <>
+                        {isFacilitator ? (
+                          <Button variant="primary" onClick={handleStartQuiz} className="w-100 mb-3">
+                            ⭐ Start Quiz (Facilitator Only)
+                          </Button>
+                        ) : (
+                          participants.length > 0 && (
+                            <Alert variant="info" className="text-center">
+                              Waiting for facilitator to start the quiz...
+                            </Alert>
+                          )
+                        )}
+                      </>
                     )}
                     {quizStarted && question && (
                       <div className="mt-3">

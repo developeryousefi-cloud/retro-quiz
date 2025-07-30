@@ -69,6 +69,11 @@ const QuizLobby: React.FC = () => {
     });
     socketRef.current.on('participantStatus', ({ participants }: { participants: Array<{ id: string; name: string; answered: boolean; isFacilitator: boolean }> }) => {
       setParticipants(participants);
+      // Sync facilitator status with backend data
+      const currentUser = participants.find(p => p.id === socketRef.current?.id);
+      if (currentUser) {
+        setIsFacilitator(currentUser.isFacilitator);
+      }
     });
     return () => {
       socketRef.current?.off('participantJoined');
@@ -178,7 +183,14 @@ const QuizLobby: React.FC = () => {
                       </div>
                     )}
                     {isFacilitator && !quizStarted && (
-                      <Button variant="primary" onClick={handleStartQuiz} className="w-100 mb-3">Start Quiz</Button>
+                      <Button variant="primary" onClick={handleStartQuiz} className="w-100 mb-3">
+                        ⭐ Start Quiz (Facilitator Only)
+                      </Button>
+                    )}
+                    {!isFacilitator && !quizStarted && participants.length > 0 && (
+                      <Alert variant="info" className="text-center">
+                        Waiting for facilitator to start the quiz...
+                      </Alert>
                     )}
                     {quizStarted && question && (
                       <div className="mt-3">

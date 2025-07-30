@@ -222,14 +222,16 @@ io.on('connection', (socket) => {
   });
 
   // Facilitator starts the quiz
-  socket.on('startQuiz', async ({ sessionCode }, callback) => {
+  socket.on('startQuiz', async ({ sessionCode, questionCount = 5 }, callback) => {
     const session = sessions[sessionCode];
     if (!session || session.facilitator !== socket.id) {
       if (callback) callback({ error: 'Invalid session or permissions' });
       return;
     }
+    // Validate question count
+    const numQuestions = Math.min(Math.max(questionCount, 3), 25); // Min 3, Max 25
     // Fetch dynamic questions
-    const dynamicQuestions = await fetchTriviaQuestions(5);
+    const dynamicQuestions = await fetchTriviaQuestions(numQuestions);
     session.quizState = {
       started: true,
       currentQuestion: 0,
@@ -247,7 +249,7 @@ io.on('connection', (socket) => {
     emitParticipantStatus(sessionCode);
     startQuestionTimer(sessionCode);
     if (callback) callback({ success: true });
-    console.log(`Quiz started for session ${sessionCode}`);
+    console.log(`Quiz started for session ${sessionCode} with ${numQuestions} questions`);
   });
 
   // Facilitator sends next question

@@ -32,6 +32,7 @@ const QuizLobby: React.FC = () => {
   const [timer, setTimer] = useState<number | null>(null);
   const [timeUp, setTimeUp] = useState(false);
   const [participants, setParticipants] = useState<Array<{ id: string; name: string; answered: boolean; isFacilitator: boolean }>>([]);
+  const [questionCount, setQuestionCount] = useState<number>(8);
 
   useEffect(() => {
     socketRef.current = io(SERVER_URL);
@@ -118,7 +119,10 @@ const QuizLobby: React.FC = () => {
   };
 
   const handleStartQuiz = () => {
-    socketRef.current?.emit('startQuiz', { sessionCode: sessionCode as string }, (response: { error?: string }) => {
+    socketRef.current?.emit('startQuiz', { 
+      sessionCode: sessionCode as string, 
+      questionCount: questionCount 
+    }, (response: { error?: string }) => {
       if (response.error) setAlert({ variant: 'danger', message: response.error });
     });
   };
@@ -189,9 +193,25 @@ const QuizLobby: React.FC = () => {
                     {!quizStarted && (
                       <>
                         {isFacilitator ? (
-                          <Button variant="primary" onClick={handleStartQuiz} className="w-100 mb-3">
-                            ⭐ Start Quiz (Facilitator Only)
-                          </Button>
+                          <div className="mb-3">
+                            <Form.Group className="mb-3">
+                              <Form.Label><strong>Number of Questions</strong></Form.Label>
+                              <Form.Select 
+                                value={questionCount} 
+                                onChange={(e) => setQuestionCount(Number(e.target.value))}
+                                className="mb-2"
+                              >
+                                <option value={5}>5 questions (~2 minutes)</option>
+                                <option value={8}>8 questions (~3 minutes)</option>
+                                <option value={10}>10 questions (~4 minutes)</option>
+                                <option value={15}>15 questions (~5 minutes)</option>
+                                <option value={20}>20 questions (~7 minutes)</option>
+                              </Form.Select>
+                            </Form.Group>
+                            <Button variant="primary" onClick={handleStartQuiz} className="w-100">
+                              ⭐ Start Quiz with {questionCount} Questions
+                            </Button>
+                          </div>
                         ) : (
                           participants.length > 0 && (
                             <Alert variant="info" className="text-center">
@@ -203,7 +223,7 @@ const QuizLobby: React.FC = () => {
                     )}
                     {quizStarted && question && (
                       <div className="mt-3">
-                        <h5>Question {questionIndex + 1}</h5>
+                        <h5>Question {questionIndex + 1} of {questionCount}</h5>
                         <p>{question.question}</p>
                         {timer !== null && (
                           <Alert variant={timer > 5 ? 'info' : 'danger'} className="text-center">

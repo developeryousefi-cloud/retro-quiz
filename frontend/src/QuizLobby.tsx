@@ -5,7 +5,7 @@ import {
   Container, Row, Col, Button, Form, Alert, ListGroup, Card, Stack
 } from 'react-bootstrap';
 
-const SERVER_URL = 'http://localhost:4000';
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4000';
 
 type Question = {
   question: string;

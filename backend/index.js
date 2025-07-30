@@ -3,12 +3,14 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const Database = require('better-sqlite3');
+// Use dynamic import for node-fetch in CommonJS
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: process.env.FRONTEND_URL || ['http://localhost:5173', 'http://localhost:3000'],
     methods: ['GET', 'POST']
   }
 });
@@ -50,7 +52,9 @@ function saveResults(sessionCode, scores) {
   }
 }
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || ['http://localhost:5173', 'http://localhost:3000']
+}));
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -129,6 +133,19 @@ function emitParticipantStatus(sessionCode) {
   io.to(sessionCode).emit('participantStatus', { participants });
 }
 
+async function fetchTriviaQuestions(amount = 5) {
+  const res = await fetch(`https://opentdb.com/api.php?amount=${amount}&type=multiple`);
+  const data = await res.json();
+  return data.results.map(q => {
+    const options = [...q.incorrect_answers, q.correct_answer].sort(() => Math.random() - 0.5);
+    return {
+      question: q.question,
+      options,
+      answer: options.indexOf(q.correct_answer),
+    };
+  });
+}
+
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
@@ -168,24 +185,26 @@ io.on('connection', (socket) => {
   });
 
   // Facilitator starts the quiz
-  socket.on('startQuiz', ({ sessionCode }, callback) => {
+  socket.on('startQuiz', async ({ sessionCode }, callback) => {
     const session = sessions[sessionCode];
     if (!session || session.facilitator !== socket.id) {
       if (callback) callback({ error: 'Invalid session or permissions' });
       return;
     }
+    // Fetch dynamic questions
+    const dynamicQuestions = await fetchTriviaQuestions(5);
     session.quizState = {
       started: true,
       currentQuestion: 0,
-      questions: sampleQuestions,
+      questions: dynamicQuestions,
       answers: {}, // { socketId: [answerIndex, ...] }
     };
     io.to(sessionCode).emit('quizStarted');
     // Send first question
     io.to(sessionCode).emit('question', {
       index: 0,
-      question: sampleQuestions[0].question,
-      options: sampleQuestions[0].options,
+      question: dynamicQuestions[0].question,
+      options: dynamicQuestions[0].options,
     });
     startQuestionTimer(sessionCode);
     if (callback) callback({ success: true });

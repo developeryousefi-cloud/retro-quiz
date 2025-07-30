@@ -112,6 +112,8 @@ function startQuestionTimer(sessionCode) {
           question: q.question,
           options: q.options,
         });
+        // Reset participant status for new question
+        emitParticipantStatus(sessionCode);
         startQuestionTimer(sessionCode);
       }
     }
@@ -241,10 +243,11 @@ io.on('connection', (socket) => {
       question: dynamicQuestions[0].question,
       options: dynamicQuestions[0].options,
     });
+    // Reset participant status for first question
+    emitParticipantStatus(sessionCode);
     startQuestionTimer(sessionCode);
     if (callback) callback({ success: true });
     console.log(`Quiz started for session ${sessionCode}`);
-    emitParticipantStatus(sessionCode);
   });
 
   // Facilitator sends next question
@@ -271,10 +274,11 @@ io.on('connection', (socket) => {
       question: q.question,
       options: q.options,
     });
+    // Reset participant status for new question
+    emitParticipantStatus(sessionCode);
     startQuestionTimer(sessionCode);
     if (callback) callback({ success: true });
     console.log(`Sent question ${quiz.currentQuestion} to session ${sessionCode}`);
-    emitParticipantStatus(sessionCode);
   });
 
   // Participant submits answer

@@ -133,15 +133,50 @@ function emitParticipantStatus(sessionCode) {
   io.to(sessionCode).emit('participantStatus', { participants });
 }
 
+// Helper function to decode HTML entities
+function decodeHtml(html) {
+  const entities = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#039;': "'",
+    '&#x27;': "'",
+    '&ldquo;': '"',
+    '&rdquo;': '"',
+    '&lsquo;': "'",
+    '&rsquo;': "'",
+  };
+  return html.replace(/&[#\w]+;/g, (entity) => entities[entity] || entity);
+}
+
+// Proper shuffle function
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 async function fetchTriviaQuestions(amount = 5) {
   const res = await fetch(`https://opentdb.com/api.php?amount=${amount}&type=multiple`);
   const data = await res.json();
   return data.results.map(q => {
-    const options = [...q.incorrect_answers, q.correct_answer].sort(() => Math.random() - 0.5);
+    // Decode HTML entities for question and all answers
+    const decodedQuestion = decodeHtml(q.question);
+    const decodedCorrectAnswer = decodeHtml(q.correct_answer);
+    const decodedIncorrectAnswers = q.incorrect_answers.map(decodeHtml);
+    
+    // Create and shuffle options
+    const allAnswers = [...decodedIncorrectAnswers, decodedCorrectAnswer];
+    const shuffledOptions = shuffleArray(allAnswers);
+    
     return {
-      question: q.question,
-      options,
-      answer: options.indexOf(q.correct_answer),
+      question: decodedQuestion,
+      options: shuffledOptions,
+      answer: shuffledOptions.indexOf(decodedCorrectAnswer),
     };
   });
 }

@@ -159,7 +159,8 @@ const QuizLobby: React.FC = () => {
           <Card className="shadow-lg">
             <Card.Header className="text-center bg-dark text-white py-3">
               <h4 className="mb-1">Autodesk</h4>
-              <div className="small text-info">CSI Team Retro Quiz</div>
+              <div className="small text-info">ADP Product Analytics</div>
+              <div className="small text-light">Team Retro Quiz</div>
             </Card.Header>
             <Card.Body>
               <Stack gap={3}>

@@ -33,6 +33,7 @@ const QuizLobby: React.FC = () => {
   const [timeUp, setTimeUp] = useState(false);
   const [participants, setParticipants] = useState<Array<{ id: string; name: string; answered: boolean; isFacilitator: boolean }>>([]);
   const [questionCount, setQuestionCount] = useState<number>(8);
+  const [difficulty, setDifficulty] = useState<string>('mixed');
 
   useEffect(() => {
     socketRef.current = io(SERVER_URL);
@@ -124,7 +125,8 @@ const QuizLobby: React.FC = () => {
   const handleStartQuiz = () => {
     socketRef.current?.emit('startQuiz', { 
       sessionCode: sessionCode as string, 
-      questionCount: questionCount 
+      questionCount: questionCount,
+      difficulty: difficulty
     }, (response: { error?: string }) => {
       if (response.error) setAlert({ variant: 'danger', message: response.error });
     });
@@ -155,9 +157,16 @@ const QuizLobby: React.FC = () => {
       <Row className="w-100 justify-content-center">
         <Col xs={12} md={8} lg={6}>
           <Card className="shadow-lg">
+            <Card.Header className="text-center bg-dark text-white py-3">
+              <h4 className="mb-1">Autodesk</h4>
+              <div className="small text-info">CSI Team Retro Quiz</div>
+            </Card.Header>
             <Card.Body>
               <Stack gap={3}>
-                <h2 className="text-center mb-4">Quiz Lobby</h2>
+                <div className="text-center">
+                  <h2 className="mb-2">Team Quiz</h2>
+                  <p className="text-muted small">Interactive ice breaker for our retro session</p>
+                </div>
                 {alert && <Alert variant={alert.variant} onClose={() => setAlert(null)} dismissible>{alert.message}</Alert>}
                 {!joined && (
                   <Stack gap={2}>
@@ -211,8 +220,21 @@ const QuizLobby: React.FC = () => {
                                 <option value={20}>20 questions (~7 minutes)</option>
                               </Form.Select>
                             </Form.Group>
+                            <Form.Group className="mb-3">
+                              <Form.Label><strong>Difficulty Level</strong></Form.Label>
+                              <Form.Select 
+                                value={difficulty} 
+                                onChange={(e) => setDifficulty(e.target.value)}
+                                className="mb-2"
+                              >
+                                <option value="mixed">Mixed (All Levels)</option>
+                                <option value="easy">Easy (Relaxed Fun)</option>
+                                <option value="medium">Medium (Balanced)</option>
+                                <option value="hard">Hard (Challenge Mode)</option>
+                              </Form.Select>
+                            </Form.Group>
                             <Button variant="primary" onClick={handleStartQuiz} className="w-100">
-                              ⭐ Start Quiz with {questionCount} Questions
+                              ⭐ Start {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Quiz ({questionCount} Questions)
                             </Button>
                           </div>
                         ) : (

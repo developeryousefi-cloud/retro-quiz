@@ -162,8 +162,15 @@ function shuffleArray(array) {
   return shuffled;
 }
 
-async function fetchTriviaQuestions(amount = 5) {
-  const res = await fetch(`https://opentdb.com/api.php?amount=${amount}&type=multiple`);
+async function fetchTriviaQuestions(amount = 5, difficulty = 'mixed') {
+  let apiUrl = `https://opentdb.com/api.php?amount=${amount}&type=multiple`;
+  
+  // Add difficulty parameter if not mixed
+  if (difficulty !== 'mixed') {
+    apiUrl += `&difficulty=${difficulty}`;
+  }
+  
+  const res = await fetch(apiUrl);
   const data = await res.json();
   return data.results.map(q => {
     // Decode HTML entities for question and all answers
@@ -222,7 +229,7 @@ io.on('connection', (socket) => {
   });
 
   // Facilitator starts the quiz
-  socket.on('startQuiz', async ({ sessionCode, questionCount = 5 }, callback) => {
+  socket.on('startQuiz', async ({ sessionCode, questionCount = 5, difficulty = 'mixed' }, callback) => {
     const session = sessions[sessionCode];
     if (!session || session.facilitator !== socket.id) {
       if (callback) callback({ error: 'Invalid session or permissions' });
@@ -231,7 +238,7 @@ io.on('connection', (socket) => {
     // Validate question count
     const numQuestions = Math.min(Math.max(questionCount, 3), 25); // Min 3, Max 25
     // Fetch dynamic questions
-    const dynamicQuestions = await fetchTriviaQuestions(numQuestions);
+    const dynamicQuestions = await fetchTriviaQuestions(numQuestions, difficulty);
     session.quizState = {
       started: true,
       currentQuestion: 0,
@@ -249,7 +256,7 @@ io.on('connection', (socket) => {
     emitParticipantStatus(sessionCode);
     startQuestionTimer(sessionCode);
     if (callback) callback({ success: true });
-    console.log(`Quiz started for session ${sessionCode} with ${numQuestions} questions`);
+    console.log(`Quiz started for session ${sessionCode} with ${numQuestions} ${difficulty} questions`);
   });
 
   // Facilitator sends next question

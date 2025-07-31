@@ -46,9 +46,12 @@ const QuizLobby: React.FC = () => {
     socketRef.current.on('participantJoined', ({ name }: { name: string }) => {
       setAlert({ variant: 'info', message: `${name} joined the session!` });
     });
-    socketRef.current.on('quizStarted', () => {
+    socketRef.current.on('quizStarted', ({ totalQuestions }: { totalQuestions?: number }) => {
       setQuizStarted(true);
       setResults(null);
+      if (totalQuestions) {
+        setQuestionCount(totalQuestions);
+      }
       setAlert({ variant: 'success', message: 'Quiz started!' });
     });
     socketRef.current.on('question', (q: { index: number; question: string; options: string[] }) => {

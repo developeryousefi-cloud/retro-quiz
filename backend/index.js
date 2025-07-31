@@ -238,7 +238,7 @@ io.on('connection', (socket) => {
       questions: dynamicQuestions,
       answers: {}, // { socketId: [answerIndex, ...] }
     };
-    io.to(sessionCode).emit('quizStarted');
+    io.to(sessionCode).emit('quizStarted', { totalQuestions: numQuestions });
     // Send first question
     io.to(sessionCode).emit('question', {
       index: 0,

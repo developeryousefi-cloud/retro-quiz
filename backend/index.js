@@ -325,15 +325,19 @@ io.on('connection', (socket) => {
       if (callback) callback({ error: 'Quiz not started' });
       return;
     }
-    // Calculate scores
+    // Calculate and sort scores
     const scores = session.participants.map(p => {
       const answers = quiz.answers[p.id] || [];
       let score = 0;
       quiz.questions.forEach((q, i) => {
         if (answers[i] === q.answer) score++;
       });
-      return { name: p.name, score };
-    });
+      return { 
+        name: p.name, 
+        score,
+        isFacilitator: session.facilitator === p.id 
+      };
+    }).sort((a, b) => b.score - a.score); // Sort by score descending
     io.to(sessionCode).emit('results', { scores });
     saveResults(sessionCode, session.participants.map(p => ({ id: p.id, name: p.name, score: scores.find(s => s.name === p.name)?.score || 0 })));
     if (callback) callback({ success: true, scores });

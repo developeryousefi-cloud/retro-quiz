@@ -162,12 +162,17 @@ function shuffleArray(array) {
   return shuffled;
 }
 
-async function fetchTriviaQuestions(amount = 5, difficulty = 'mixed') {
+async function fetchTriviaQuestions(amount = 5, difficulty = 'mixed', category = 0) {
   let apiUrl = `https://opentdb.com/api.php?amount=${amount}&type=multiple`;
   
   // Add difficulty parameter if not mixed
   if (difficulty !== 'mixed') {
     apiUrl += `&difficulty=${difficulty}`;
+  }
+  
+  // Add category parameter if not 0 (mixed)
+  if (category !== 0) {
+    apiUrl += `&category=${category}`;
   }
   
   const res = await fetch(apiUrl);
@@ -229,7 +234,7 @@ io.on('connection', (socket) => {
   });
 
   // Facilitator starts the quiz
-  socket.on('startQuiz', async ({ sessionCode, questionCount = 5, difficulty = 'mixed' }, callback) => {
+  socket.on('startQuiz', async ({ sessionCode, questionCount = 5, difficulty = 'mixed', category = 0 }, callback) => {
     const session = sessions[sessionCode];
     if (!session || session.facilitator !== socket.id) {
       if (callback) callback({ error: 'Invalid session or permissions' });
@@ -238,7 +243,7 @@ io.on('connection', (socket) => {
     // Validate question count
     const numQuestions = Math.min(Math.max(questionCount, 3), 25); // Min 3, Max 25
     // Fetch dynamic questions
-    const dynamicQuestions = await fetchTriviaQuestions(numQuestions, difficulty);
+    const dynamicQuestions = await fetchTriviaQuestions(numQuestions, difficulty, category);
     session.quizState = {
       started: true,
       currentQuestion: 0,
@@ -256,7 +261,8 @@ io.on('connection', (socket) => {
     emitParticipantStatus(sessionCode);
     startQuestionTimer(sessionCode);
     if (callback) callback({ success: true });
-    console.log(`Quiz started for session ${sessionCode} with ${numQuestions} ${difficulty} questions`);
+    const categoryName = category === 0 ? 'mixed' : `category ${category}`;
+    console.log(`Quiz started for session ${sessionCode} with ${numQuestions} ${difficulty} questions (${categoryName})`);
   });
 
   // Facilitator sends next question

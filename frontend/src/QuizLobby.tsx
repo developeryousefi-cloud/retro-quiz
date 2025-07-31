@@ -34,6 +34,7 @@ const QuizLobby: React.FC = () => {
   const [participants, setParticipants] = useState<Array<{ id: string; name: string; answered: boolean; isFacilitator: boolean }>>([]);
   const [questionCount, setQuestionCount] = useState<number>(8);
   const [difficulty, setDifficulty] = useState<string>('mixed');
+  const [category, setCategory] = useState<number>(0); // 0 means any category
 
   useEffect(() => {
     socketRef.current = io(SERVER_URL);
@@ -126,7 +127,8 @@ const QuizLobby: React.FC = () => {
     socketRef.current?.emit('startQuiz', { 
       sessionCode: sessionCode as string, 
       questionCount: questionCount,
-      difficulty: difficulty
+      difficulty: difficulty,
+      category: category
     }, (response: { error?: string }) => {
       if (response.error) setAlert({ variant: 'danger', message: response.error });
     });
@@ -222,6 +224,26 @@ const QuizLobby: React.FC = () => {
                               </Form.Select>
                             </Form.Group>
                             <Form.Group className="mb-3">
+                              <Form.Label><strong>Category</strong></Form.Label>
+                              <Form.Select 
+                                value={category} 
+                                onChange={(e) => setCategory(Number(e.target.value))}
+                                className="mb-2"
+                              >
+                                <option value={0}>Mixed Categories</option>
+                                <option value={9}>General Knowledge</option>
+                                <option value={17}>Science & Nature</option>
+                                <option value={18}>Computer Science</option>
+                                <option value={19}>Mathematics</option>
+                                <option value={21}>Sports</option>
+                                <option value={23}>History</option>
+                                <option value={24}>Politics</option>
+                                <option value={25}>Art</option>
+                                <option value={27}>Animals</option>
+                                <option value={28}>Vehicles</option>
+                              </Form.Select>
+                            </Form.Group>
+                            <Form.Group className="mb-3">
                               <Form.Label><strong>Difficulty Level</strong></Form.Label>
                               <Form.Select 
                                 value={difficulty} 
@@ -235,7 +257,7 @@ const QuizLobby: React.FC = () => {
                               </Form.Select>
                             </Form.Group>
                             <Button variant="primary" onClick={handleStartQuiz} className="w-100">
-                              ⭐ Start {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Quiz ({questionCount} Questions)
+                              ⭐ Start {category === 0 ? 'Mixed' : 'Themed'} {difficulty !== 'mixed' ? `${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} ` : ''}Quiz ({questionCount} Questions)
                             </Button>
                           </div>
                         ) : (
